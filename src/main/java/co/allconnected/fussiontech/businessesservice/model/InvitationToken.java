@@ -16,9 +16,9 @@ public class InvitationToken {
     @Id
     @SequenceGenerator(name = "invitation_token_id_gen", sequenceName = "conveyance_request_id_conveyance_request_seq", allocationSize = 1)
     @Column(name = "invitation_token", nullable = false, length = 28)
-    private String invitationToken;
+    private UUID invitationToken;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false, cascade = CascadeType.ALL)
     @JoinColumn(name = "id_business", nullable = false)
     private Business idBusiness;
 

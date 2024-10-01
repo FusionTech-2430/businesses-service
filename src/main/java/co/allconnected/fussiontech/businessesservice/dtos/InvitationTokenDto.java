@@ -4,6 +4,7 @@ import lombok.*;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.UUID;
 
 /**
  * DTO for {@link co.allconnected.fussiontech.businessesservice.model.InvitationToken}
@@ -13,7 +14,7 @@ import java.time.Instant;
 @AllArgsConstructor
 @Value
 public class InvitationTokenDto implements Serializable {
-    String invitationToken;
+    UUID invitationToken;
     BusinessDto idBusiness;
     Instant creationDate;
     Instant expirationDate;

@@ -1,12 +1,20 @@
 package co.allconnected.fussiontech.businessesservice.services;
 
 import co.allconnected.fussiontech.businessesservice.dtos.BusinessDto;
-import co.allconnected.fussiontech.businessesservice.dtos.InvitationTokenDto;
+import co.allconnected.fussiontech.businessesservice.dtos.BusinessMemberDto;
+import co.allconnected.fussiontech.businessesservice.dtos.BusinessMemberIdDto;
+import co.allconnected.fussiontech.businessesservice.exceptions.OperationException;
 import co.allconnected.fussiontech.businessesservice.model.Business;
+import co.allconnected.fussiontech.businessesservice.model.BusinessMember;
+import co.allconnected.fussiontech.businessesservice.model.BusinessMemberId;
 import co.allconnected.fussiontech.businessesservice.model.InvitationToken;
+import co.allconnected.fussiontech.businessesservice.repository.BusinessMemberRepository;
 import co.allconnected.fussiontech.businessesservice.repository.BusinessRepository;
 import co.allconnected.fussiontech.businessesservice.repository.InvitationTokenRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -17,19 +25,24 @@ public class InvitationService {
 
     private final InvitationTokenRepository invitationRepository;
     private final BusinessRepository businessRepository;
+    private final BusinessMemberRepository businessMemberRepository;
 
-    public InvitationService(InvitationTokenRepository invitationRepository, BusinessRepository businessRepository) {
+    public InvitationService(InvitationTokenRepository invitationRepository, BusinessRepository businessRepository, BusinessMemberRepository businessMemberRepository) {
         this.invitationRepository = invitationRepository;
         this.businessRepository = businessRepository;
+        this.businessMemberRepository = businessMemberRepository;
     }
 
-    public String createInvitationToken(UUID idBusiness) {
+    @Autowired
+    private InvitationTokenRepository invitationTokenRepository;
+
+    public UUID createInvitationToken(UUID idBusiness) {
         // Fetch the business entity from the database
         Business business = businessRepository.findById(idBusiness)
                 .orElseThrow(() -> new RuntimeException("Business not found: " + idBusiness));
 
         // Generate a new invitation token
-        String token = UUID.randomUUID().toString();
+        UUID token = UUID.randomUUID();
         Instant creationDate = Instant.now();
         Instant expirationDate = creationDate.plus(3, ChronoUnit.DAYS);
 
@@ -45,5 +58,44 @@ public class InvitationService {
 
         // Return the InvitationTokenDto (assuming BusinessDto has an appropriate constructor)
         return token;
+    }
+
+    @Transactional
+    public BusinessMemberDto addBusinessMemberUsingToken(UUID token, String userId) {
+        // Use the repository to find the token
+        InvitationToken invitationToken = invitationTokenRepository.findByInvitationToken(token)
+                .orElseThrow(() -> new OperationException(HttpStatus.BAD_REQUEST.value(), "Invalid or expired token"));
+
+        // Check if the token has expired
+        if (invitationToken.getExpirationDate().isBefore(Instant.now())) {
+            throw new OperationException(HttpStatus.BAD_REQUEST.value(), "Token has expired");
+        }
+
+        // Fetch the business to which the user is being added
+        Business business = businessRepository.findById(invitationToken.getIdBusiness().getId())
+                .orElseThrow(() -> new OperationException(HttpStatus.NOT_FOUND.value(), "Business not found"));
+
+        // Check if the user is already a member
+        BusinessMemberId businessMemberId = new BusinessMemberId(userId, business.getId());
+        if (businessMemberRepository.existsById(businessMemberId)) {
+            throw new OperationException(HttpStatus.CONFLICT.value(), "User is already a member of the business");
+        }
+
+        // Add the user to the business as a member
+        BusinessMember businessMember = new BusinessMember();
+        businessMember.setId(businessMemberId);
+        businessMember.setIdBusiness(business);
+        businessMember.setJoinDate(Instant.now());
+
+        businessMemberRepository.save(businessMember);
+
+        invitationTokenRepository.delete(invitationToken);
+
+        // Return the response as DTO
+        return new BusinessMemberDto(
+                new BusinessMemberIdDto(userId, business.getId()),
+                new BusinessDto(business.getName(), business.getOwnerId(), business.getId()),
+                businessMember.getJoinDate()
+        );
     }
 }
