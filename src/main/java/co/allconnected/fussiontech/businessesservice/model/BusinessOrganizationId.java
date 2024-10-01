@@ -14,7 +14,7 @@ import java.util.UUID;
 @Setter
 @Embeddable
 public class BusinessOrganizationId implements Serializable {
-    private static final long serialVersionUID = 1349423414215446063L;
+
     @Column(name = "id_organization", nullable = false)
     private UUID idOrganization;
 

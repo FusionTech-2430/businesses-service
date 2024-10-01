@@ -15,6 +15,5 @@ public class BusinessOrganization {
     @MapsId("idBusiness")
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_business", nullable = false)
-    private Business idBusiness;
-
+    private Business business;
 }
