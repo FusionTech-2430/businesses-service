@@ -1,8 +1,6 @@
 package co.allconnected.fussiontech.businessesservice.services;
 
-import co.allconnected.fussiontech.businessesservice.dtos.BusinessDto;
-import co.allconnected.fussiontech.businessesservice.dtos.BusinessMemberDto;
-import co.allconnected.fussiontech.businessesservice.dtos.BusinessMemberIdDto;
+import co.allconnected.fussiontech.businessesservice.dtos.*;
 import co.allconnected.fussiontech.businessesservice.exceptions.OperationException;
 import co.allconnected.fussiontech.businessesservice.model.Business;
 import co.allconnected.fussiontech.businessesservice.model.BusinessMember;
@@ -18,7 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class InvitationService {
@@ -61,7 +61,7 @@ public class InvitationService {
     }
 
     @Transactional
-    public BusinessMemberDto addBusinessMemberUsingToken(UUID token, String userId) {
+    public BusinessMemberDto addBusinessMemberUsingToken(UUID token, String userId, UUID idBusiness) {
         // Use the repository to find the token
         InvitationToken invitationToken = invitationTokenRepository.findByInvitationToken(token)
                 .orElseThrow(() -> new OperationException(HttpStatus.BAD_REQUEST.value(), "Invalid or expired token"));
@@ -72,7 +72,7 @@ public class InvitationService {
         }
 
         // Fetch the business to which the user is being added
-        Business business = businessRepository.findById(invitationToken.getIdBusiness().getId())
+        Business business = businessRepository.findById(idBusiness)
                 .orElseThrow(() -> new OperationException(HttpStatus.NOT_FOUND.value(), "Business not found"));
 
         // Check if the user is already a member
@@ -96,6 +96,28 @@ public class InvitationService {
                 new BusinessMemberIdDto(userId, business.getId()),
                 new BusinessDto(business.getName(), business.getOwnerId(), business.getId()),
                 businessMember.getJoinDate()
+        );
+    }
+
+    // Get all the invitation tokens for a business (for debugging purposes)
+    public List<InvitationResponseDto> getAllInvitations() {
+        return invitationRepository.findAll()
+                .stream()
+                .map(this::mapToResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    public InvitationResponseDto mapToResponseDto(InvitationToken invitationToken) {
+    return new InvitationResponseDto(
+            invitationToken.getIdBusiness().getId(),
+            invitationToken.getInvitationToken(),
+            new BusinessDto(
+                invitationToken.getIdBusiness().getName(),
+                invitationToken.getIdBusiness().getOwnerId(),
+                invitationToken.getIdBusiness().getId()
+            ),
+            invitationToken.getCreationDate(),
+            invitationToken.getExpirationDate()
         );
     }
 }

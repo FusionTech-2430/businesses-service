@@ -1,6 +1,7 @@
 package co.allconnected.fussiontech.businessesservice.services;
 
 import co.allconnected.fussiontech.businessesservice.dtos.BusinessDto;
+import co.allconnected.fussiontech.businessesservice.dtos.BusinessMemberDto;
 import co.allconnected.fussiontech.businessesservice.dtos.BusinessResponseDto;
 import co.allconnected.fussiontech.businessesservice.exceptions.OperationException;
 import co.allconnected.fussiontech.businessesservice.model.Business;

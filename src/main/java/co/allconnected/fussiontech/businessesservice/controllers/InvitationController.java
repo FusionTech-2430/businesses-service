@@ -1,6 +1,7 @@
 package co.allconnected.fussiontech.businessesservice.controllers;
 
 import co.allconnected.fussiontech.businessesservice.dtos.BusinessMemberDto;
+import co.allconnected.fussiontech.businessesservice.dtos.InvitationResponseDto;
 import co.allconnected.fussiontech.businessesservice.exceptions.OperationException;
 import co.allconnected.fussiontech.businessesservice.services.InvitationService;
 import co.allconnected.fussiontech.businessesservice.utils.ErrorResponse;
@@ -10,17 +11,30 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("api/v1/business/{id_business}")
+@RequestMapping("api/v1/businesses")
 public class InvitationController {
 
     @Autowired
     private InvitationService invitationService;
 
-    @PostMapping("/join-token")
+    // Get all the invitation tokens for a business (for debugging purposes)
+    @GetMapping("/invitations")
+    public ResponseEntity<?> getAllInvitations() {
+        try {
+            List<InvitationResponseDto> businesses = invitationService.getAllInvitations();
+            return new ResponseEntity<>(businesses, HttpStatus.OK);
+        } catch (Exception e) {
+            throw new OperationException(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Emprendimientos no encontrados");
+        }
+    }
+
+    // Create a new invitation token for a business
+    @PostMapping("/{id_business}/join-token")
     public ResponseEntity<?> createInvitationToken(@PathVariable("id_business") UUID idBusiness) {
         try {
             UUID token = invitationService.createInvitationToken(idBusiness);
@@ -32,22 +46,20 @@ public class InvitationController {
         }
     }
 
-    @PostMapping("/add-member")
-    public ResponseEntity<?> addBusinessMemberUsingToken(@RequestBody Map<String, Object> requestBody) {
+    // Add a business member using a token
+    @PostMapping("/{id_business}/members")
+    public ResponseEntity<?> addBusinessMemberUsingToken(@RequestBody Map<String, Object> requestBody, @PathVariable UUID id_business) {
         try {
-            String token = (String) requestBody.get("token");
-            String userIdStr = (String) requestBody.get("userId");
+            String userIdStr = (String) requestBody.get("id_user");
+            String token = (String) requestBody.get("join_token");
 
             // Call the service with the token and userId (business is retrieved from the token)
-            BusinessMemberDto businessMemberDto = invitationService.addBusinessMemberUsingToken(UUID.fromString(token), userIdStr);
-
-            return new ResponseEntity<>(new SuccessResponse(HttpStatus.OK.value(), "User successfully added to business"), HttpStatus.OK);
+            BusinessMemberDto businessMemberDto = invitationService.addBusinessMemberUsingToken(UUID.fromString(token), userIdStr, id_business);
+            return new ResponseEntity<>(businessMemberDto, HttpStatus.OK);
         } catch (OperationException e) {
             return new ResponseEntity<>(new ErrorResponse(e.getCode(), e.getMessage()), HttpStatus.valueOf(e.getCode()));
         } catch (Exception e) {
             return new ResponseEntity<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error adding user to business"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-
 }
