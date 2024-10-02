@@ -86,4 +86,17 @@ public class InvitationController {
             throw new OperationException(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Emprendimientos no encontrados");
         }
     }
+
+    // Delete a business member
+    @DeleteMapping("/{id_business}/members/{id_user}")
+    public ResponseEntity<?> deleteBusinessMember(@PathVariable UUID id_business, @PathVariable String id_user) {
+        try {
+            invitationService.deleteBusinessMember(id_business, id_user);
+            return new ResponseEntity<>(new SuccessResponse(HttpStatus.OK.value(), "Business member deleted successfully"), HttpStatus.OK);
+        } catch (OperationException e) {
+            return new ResponseEntity<>(new ErrorResponse(e.getCode(), e.getMessage()), HttpStatus.valueOf(e.getCode()));
+        } catch (Exception e) {
+            return new ResponseEntity<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error deleting business member"), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

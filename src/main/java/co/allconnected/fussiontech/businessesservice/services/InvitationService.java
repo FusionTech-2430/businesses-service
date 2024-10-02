@@ -147,4 +147,16 @@ public class InvitationService {
             invitationToken.getExpirationDate()
         );
     }
+
+    // Delete a member from a business
+    public void deleteBusinessMember(UUID idBusiness, String userId) {
+        Business business = businessRepository.findById(idBusiness)
+                .orElseThrow(() -> new OperationException(HttpStatus.NOT_FOUND.value(), "Business not found"));
+
+        BusinessMemberId businessMemberId = new BusinessMemberId(userId, business.getId());
+        BusinessMember businessMember = businessMemberRepository.findById(businessMemberId)
+                .orElseThrow(() -> new OperationException(HttpStatus.NOT_FOUND.value(), "User not found in business"));
+
+        businessMemberRepository.delete(businessMember);
+    }
 }
