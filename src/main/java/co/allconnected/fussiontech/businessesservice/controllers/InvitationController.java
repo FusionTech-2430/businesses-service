@@ -75,4 +75,15 @@ public class InvitationController {
             return new ResponseEntity<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error getting business members"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    // Get the last token for a business
+    @GetMapping("/{id_business}/join-token")
+    public ResponseEntity<?> getLastInvitation(@PathVariable UUID id_business) {
+        try {
+            List<InvitationResponseDto> invitation = invitationService.getLastInvitation(id_business);
+            return new ResponseEntity<>(invitation, HttpStatus.OK);
+        } catch (Exception e) {
+            throw new OperationException(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Emprendimientos no encontrados");
+        }
+    }
 }

@@ -118,7 +118,15 @@ public class InvitationService {
         );
     }
 
-    // Get all the invitation tokens for a business (for debugging purposes)
+    // Get the last token for a business (for debugging purposes)
+    public List<InvitationResponseDto> getLastInvitation(UUID idBusiness) {
+        return invitationRepository.findTop1ByIdBusinessIdOrderByCreationDateDesc(idBusiness)
+                .stream()
+                .map(this::mapToResponseDto)
+                .collect(Collectors.toList());
+        }
+
+    // Get all the invitation tokens all business (for debugging purposes)
     public List<InvitationResponseDto> getAllInvitations() {
         return invitationRepository.findAll()
                 .stream()
