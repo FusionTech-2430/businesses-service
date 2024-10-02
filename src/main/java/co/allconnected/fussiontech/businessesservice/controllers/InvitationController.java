@@ -62,4 +62,17 @@ public class InvitationController {
             return new ResponseEntity<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error adding user to business"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    // Get all the business members for a business
+    @GetMapping("/{id_business}/members")
+    public ResponseEntity<?> getBusinessMembers(@PathVariable UUID id_business) {
+        try {
+            List<BusinessMemberDto> businessMembers = invitationService.getBusinessMembers(id_business);
+            return new ResponseEntity<>(businessMembers, HttpStatus.OK);
+        } catch (OperationException e) {
+            return new ResponseEntity<>(new ErrorResponse(e.getCode(), e.getMessage()), HttpStatus.valueOf(e.getCode()));
+        } catch (Exception e) {
+            return new ResponseEntity<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error getting business members"), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

@@ -99,6 +99,25 @@ public class InvitationService {
         );
     }
 
+    // Get all the business members for a business
+    public List<BusinessMemberDto> getBusinessMembers(UUID idBusiness) {
+        Business business = businessRepository.findById(idBusiness)
+                .orElseThrow(() -> new OperationException(HttpStatus.NOT_FOUND.value(), "Business not found"));
+
+        return businessMemberRepository.findByIdBusiness(business)
+                .stream()
+                .map(this::mapToBusinessMemberDto)
+                .collect(Collectors.toList());
+    }
+
+    public BusinessMemberDto mapToBusinessMemberDto(BusinessMember businessMember) {
+        return new BusinessMemberDto(
+                new BusinessMemberIdDto(businessMember.getId().getIdUser(), businessMember.getId().getIdBusiness()),
+                new BusinessDto(businessMember.getIdBusiness().getName(), businessMember.getIdBusiness().getOwnerId(), businessMember.getIdBusiness().getId()),
+                businessMember.getJoinDate()
+        );
+    }
+
     // Get all the invitation tokens for a business (for debugging purposes)
     public List<InvitationResponseDto> getAllInvitations() {
         return invitationRepository.findAll()
