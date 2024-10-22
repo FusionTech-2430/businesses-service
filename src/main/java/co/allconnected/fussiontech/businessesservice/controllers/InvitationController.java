@@ -47,18 +47,19 @@ public class InvitationController {
     }
 
     // Add a business member using a token
-    @PostMapping("/{id_business}/members")
-    public ResponseEntity<?> addBusinessMemberUsingToken(@RequestBody Map<String, Object> requestBody, @PathVariable UUID id_business) {
+    @PostMapping("/join")
+    public ResponseEntity<?> addBusinessMemberUsingToken(@RequestBody Map<String, Object> requestBody) {
         try {
             String userIdStr = (String) requestBody.get("id_user");
             String token = (String) requestBody.get("join_token");
 
             // Call the service with the token and userId (business is retrieved from the token)
-            BusinessMemberDto businessMemberDto = invitationService.addBusinessMemberUsingToken(UUID.fromString(token), userIdStr, id_business);
+            BusinessMemberDto businessMemberDto = invitationService.addBusinessMemberUsingToken(UUID.fromString(token), userIdStr);
             return new ResponseEntity<>(businessMemberDto, HttpStatus.OK);
         } catch (OperationException e) {
             return new ResponseEntity<>(new ErrorResponse(e.getCode(), e.getMessage()), HttpStatus.valueOf(e.getCode()));
         } catch (Exception e) {
+            System.out.println("Exception occurred while adding user to business: " + e.getMessage());
             return new ResponseEntity<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error adding user to business"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
