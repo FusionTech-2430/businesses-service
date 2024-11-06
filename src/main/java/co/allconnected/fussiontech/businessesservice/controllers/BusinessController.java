@@ -84,4 +84,37 @@ public class BusinessController {
             throw new OperationException(HttpStatus.NOT_FOUND.value(), "Emprendimiento no encontrado para eliminar");
         }
     }
+
+    //businesses user is a part of
+    @GetMapping("/member/{personId}")
+    public ResponseEntity<?> getBusinessesByPerson(@PathVariable String personId) {
+        try {
+            List<BusinessResponseDto> businesses = businessService.getBusinessesByPerson(personId);
+            return new ResponseEntity<>(businesses, HttpStatus.OK);
+        } catch (Exception e) {
+            throw new OperationException(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error fetching businesses for person");
+        }
+    }
+
+    //businesses user is owner of
+    @GetMapping("/owner/{ownerId}")
+    public ResponseEntity<?> getBusinessesOwnedByPerson(@PathVariable String ownerId) {
+        try {
+            List<BusinessResponseDto> businesses = businessService.getBusinessesOwnedByPerson(ownerId);
+            return new ResponseEntity<>(businesses, HttpStatus.OK);
+        } catch (Exception e) {
+            throw new OperationException(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error fetching businesses owned by person");
+        }
+    }
+
+    //businesses user is associated with
+    @GetMapping("/associated/{personId}")
+    public ResponseEntity<?> getAllBusinessesForPerson(@PathVariable String personId) {
+        try {
+            List<BusinessResponseDto> businesses = businessService.getAllBusinessesForPerson(personId);
+            return new ResponseEntity<>(businesses, HttpStatus.OK);
+        } catch (Exception e) {
+            throw new OperationException(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error fetching all businesses for person");
+        }
+    }
 }

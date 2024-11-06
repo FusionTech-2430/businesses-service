@@ -5,8 +5,10 @@ import co.allconnected.fussiontech.businessesservice.dtos.BusinessMemberDto;
 import co.allconnected.fussiontech.businessesservice.dtos.BusinessResponseDto;
 import co.allconnected.fussiontech.businessesservice.exceptions.OperationException;
 import co.allconnected.fussiontech.businessesservice.model.Business;
+import co.allconnected.fussiontech.businessesservice.model.BusinessMember;
 import co.allconnected.fussiontech.businessesservice.model.BusinessOrganization;
 import co.allconnected.fussiontech.businessesservice.model.BusinessOrganizationId;
+import co.allconnected.fussiontech.businessesservice.repository.BusinessMemberRepository;
 import co.allconnected.fussiontech.businessesservice.repository.BusinessRepository;
 import co.allconnected.fussiontech.businessesservice.repository.BusinessOrganizationRepository;
 import org.apache.commons.io.FilenameUtils;
@@ -17,8 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,6 +33,8 @@ public class BusinessService {
 
     @Autowired
     private FirebaseService firebaseService;
+    @Autowired
+    private BusinessMemberRepository businessMemberRepository;
 
     public BusinessResponseDto createBusiness(BusinessDto businessDto, MultipartFile logo) throws IOException {
         // Create a new Business entity from BusinessDto
@@ -131,6 +134,33 @@ public class BusinessService {
         businessOrganizationRepository.deleteByIdBusiness(existingBusiness.getId());
         businessRepository.delete(existingBusiness);
     }
+
+    //businesses user is a part of
+    public List<BusinessResponseDto> getBusinessesByPerson(String personId) {
+        List<BusinessMember> businessMembers = businessMemberRepository.findById_IdUser(personId);
+        return businessMembers.stream()
+                .map(bm -> mapToResponseDto(bm.getIdBusiness()))
+                .collect(Collectors.toList());
+    }
+
+    //businesses user is owner of
+    public List<BusinessResponseDto> getBusinessesOwnedByPerson(String ownerId) {
+        List<Business> businesses = businessRepository.findByOwnerId(ownerId);
+        return businesses.stream()
+                .map(this::mapToResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    //busineses user is associated to
+    public List<BusinessResponseDto> getAllBusinessesForPerson(String personId) {
+        List<BusinessResponseDto> businessesAsMember = getBusinessesByPerson(personId);
+        List<BusinessResponseDto> businessesAsOwner = getBusinessesOwnedByPerson(personId);
+
+        Set<BusinessResponseDto> allBusinesses = new HashSet<>(businessesAsMember);
+        allBusinesses.addAll(businessesAsOwner);
+        return new ArrayList<>(allBusinesses);
+    }
+
 }
 
 

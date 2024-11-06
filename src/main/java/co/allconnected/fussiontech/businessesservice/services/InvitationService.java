@@ -61,42 +61,41 @@ public class InvitationService {
     }
 
     @Transactional
-    public BusinessMemberDto addBusinessMemberUsingToken(UUID token, String userId, UUID idBusiness) {
-        // Use the repository to find the token
+    public BusinessMemberDto addBusinessMemberUsingToken(UUID token, String userId) {
+        // Step 1: Fetch the invitation token from the repository
         InvitationToken invitationToken = invitationTokenRepository.findByInvitationToken(token)
-                .orElseThrow(() -> new OperationException(HttpStatus.BAD_REQUEST.value(), "Invalid or expired token"));
+                .orElseThrow(() -> {
+                    return new OperationException(HttpStatus.BAD_REQUEST.value(), "Invalid or expired token");
+                });
 
-        // Check if the token has expired
+        // Step 2: Check if the token has expired
         if (invitationToken.getExpirationDate().isBefore(Instant.now())) {
             throw new OperationException(HttpStatus.BAD_REQUEST.value(), "Token has expired");
         }
 
-        // Fetch the business to which the user is being added
-        Business business = businessRepository.findById(idBusiness)
-                .orElseThrow(() -> new OperationException(HttpStatus.NOT_FOUND.value(), "Business not found"));
+        // Step 3: Extract the business entity directly from the token
+        Business business = invitationToken.getIdBusiness();
 
-        // Check if the user is already a member
+        // Step 4: Check if the user is already a member of the business
         BusinessMemberId businessMemberId = new BusinessMemberId(userId, business.getId());
         if (businessMemberRepository.existsById(businessMemberId)) {
             throw new OperationException(HttpStatus.CONFLICT.value(), "User is already a member of the business");
         }
 
-        // Add the user to the business as a member
+        // Step 5: Add the user as a business member
         BusinessMember businessMember = new BusinessMember();
         businessMember.setId(businessMemberId);
         businessMember.setIdBusiness(business);
         businessMember.setJoinDate(Instant.now());
 
+        // Save the new business member in the repository
         businessMemberRepository.save(businessMember);
 
+        // Step 6: Remove the invitation token as it has been used
         invitationTokenRepository.delete(invitationToken);
 
-        // Return the response as DTO
-        return new BusinessMemberDto(
-                new BusinessMemberIdDto(userId, business.getId()),
-                new BusinessDto(business.getName(), business.getOwnerId(), business.getId()),
-                businessMember.getJoinDate()
-        );
+        // Step 7: Use the mapToBusinessMemberDto function to return the response DTO
+        return mapToBusinessMemberDto(businessMember);
     }
 
     // Get all the business members for a business

@@ -15,7 +15,7 @@ public class BusinessMember {
     private BusinessMemberId id;
 
     @MapsId("idBusiness")
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "id_business", nullable = false)
     private Business idBusiness;
 
